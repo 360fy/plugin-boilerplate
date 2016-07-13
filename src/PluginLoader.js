@@ -79,33 +79,48 @@ function createPluginRootDirectory(moduleRoot) {
 
 function babelTransform(srcFile, destFile) {
     return new Promise((resolve, reject) => {
-        babel.transformFile(srcFile, (error, result) => {
-            if (error) {
-                console.error(`Error in babel compiling ${srcFile} - ${error}`);
-                reject(error);
-                return;
-            }
+        // copy src file to local first
+        const localSrcFile = `${destFile}.local`;
 
-            // if file exist, then delete it
-            Promise.resolve(existsFile(destFile, READ_WRITE_PERMISSION))
-              .then(value => {
-                  if (!value) {
-                      return true;
+        // if file exist, then delete it
+        Promise.resolve(existsFile(localSrcFile, READ_WRITE_PERMISSION))
+          .then(value => {
+              if (!value) {
+                  return true;
+              }
+
+              return fsPromise.unlinkAsync(localSrcFile);
+          })
+          .then(() => fsPromise.linkAsync(srcFile, localSrcFile))
+          .then(() => {
+              babel.transformFile(localSrcFile, (error, result) => {
+                  if (error) {
+                      console.error(`Error in babel compiling ${srcFile} - ${error}`);
+                      reject(error);
+                      return;
                   }
 
-                  return fsPromise.unlinkAsync(destFile);
-              })
-              .then(() => {
-                  const stream = FS.createWriteStream(destFile);
+                  // if file exist, then delete it
+                  Promise.resolve(existsFile(destFile, READ_WRITE_PERMISSION))
+                    .then(value => {
+                        if (!value) {
+                            return true;
+                        }
 
-                  stream.on('finish', () => {
-                      resolve(true);
-                  });
+                        return fsPromise.unlinkAsync(destFile);
+                    })
+                    .then(() => {
+                        const stream = FS.createWriteStream(destFile);
 
-                  stream.write(result.code);
-                  stream.end();
+                        stream.on('finish', () => {
+                            resolve(true);
+                        });
+
+                        stream.write(result.code);
+                        stream.end();
+                    });
               });
-        });
+          });
     });
 }
 
