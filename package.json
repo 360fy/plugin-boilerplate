@@ -1,0 +1,46 @@
+{
+  "name": "plugin-boilerplate",
+  "version": "1.0.0",
+  "description": "Boilerplate for building plugin",
+  "repository": "git@github.com:360fy/plugin-boilerplate.git",
+  "scripts": {
+    "lint": "eslint ./src/",
+    "clean": "rm -rf lib/",
+    "compile": "npm run lint && npm run clean && babel -d lib/ src/",
+    "prepublish": "npm run compile"
+  },
+  "author": "Shailendra Sharma",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "lodash": "4.13.1",
+    "md5": "^2.1.0"
+  },
+  "eslintConfig": {
+    "extends": "360fy"
+  },
+  "babel": {
+    "plugins": [
+      "transform-runtime"
+    ],
+    "presets": [
+      "node5"
+    ]
+  },
+  "devDependencies": {
+    "babel-core": "6.9.1",
+    "babel-eslint": "6.0.4",
+    "babel-plugin-transform-runtime": "6.9.0",
+    "babel-preset-es2015": "6.9.0",
+    "babel-preset-node5": "11.1.0",
+    "babel-preset-react": "6.5.0",
+    "cson": "3.0.2",
+    "eslint": "2.11.1",
+    "eslint-config-360fy": "1.1.10",
+    "eslint-plugin-react": "5.1.1",
+    "hjson": "1.8.4",
+    "properties": "1.2.1",
+    "toml": "2.3.0",
+    "vows": "0.8.1"
+  }
+}
