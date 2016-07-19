@@ -1,6 +1,6 @@
 {
   "name": "plugin-boilerplate",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Boilerplate for building plugin",
   "repository": "git@github.com:360fy/plugin-boilerplate.git",
   "scripts": {
