@@ -4,6 +4,11 @@ import Promise from 'bluebird';
 import md5 from 'md5';
 import * as babel from 'babel-core';
 
+const MODULE_PLUGIN_TYPE = 'module';
+const FILE_PLUGIN_TYPE = 'file';
+const DIRECTORY_PLUGIN_TYPE = 'directory';
+const UNKNOWN_PLUGIN_TYPE = 'unknown';
+
 const fsPromise = Promise.promisifyAll(FS);
 
 function handlePluginError(error, throwError, directory) {
@@ -124,6 +129,20 @@ function babelTransform(srcFile, destFile) {
     });
 }
 
+function getPluginType(path) {
+    return Promise.resolve(fsPromise.statAsync(path))
+      .then(stats => {
+          if (stats.isFile()) {
+              return FILE_PLUGIN_TYPE;
+          } else if (stats.isDirectory()) {
+              return DIRECTORY_PLUGIN_TYPE;
+          }
+
+          return UNKNOWN_PLUGIN_TYPE;
+      })
+      .catch(() => MODULE_PLUGIN_TYPE);
+}
+
 export default (moduleRoot, path, throwError) => {
     console.log('Scanning config at: ', path);
 
@@ -135,18 +154,18 @@ export default (moduleRoot, path, throwError) => {
           return fsPromise.accessAsync(pluginPath, READ_PERMISSION);
       })
       .then(() => createPluginRootDirectory(moduleRoot))
-      .then(() => fsPromise.statAsync(path)) // check path of original
-      .then(stats => {
+      .then(() => getPluginType(path)) // check path of original
+      .then(pluginType => {
           const pluginKey = md5(pluginPath);
           const link = pluginLink(moduleRoot, pluginKey);
 
-          if (stats.isFile()) {
+          if (pluginType === FILE_PLUGIN_TYPE) {
               console.log(`Babel compiling plugin ${pluginPath} to ${link}`);
 
               return Promise.resolve(babelTransform(pluginPath, link))
                 .then(() => require(link))
                 .then((config) => config.default);
-          } else if (stats.isDirectory()) {
+          } else if (pluginType === MODULE_PLUGIN_TYPE || pluginType === DIRECTORY_PLUGIN_TYPE) {
               return require(pluginPath);
           }
 
