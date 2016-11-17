@@ -41,7 +41,7 @@ function requireResolve(path) {
 }
 
 const READ_PERMISSION = FS.R_OK;
-const READ_WRITE_PERMISSION = FS.R_OK | FS.W_OK;
+const READ_WRITE_PERMISSION = FS.R_OK | FS.W_OK; // eslint-disable-line no-bitwise
 
 function existsFile(file, permission) {
     return Promise.resolve(fsPromise.accessAsync(file, permission))
@@ -61,7 +61,7 @@ function createPluginRootDirectory(moduleRoot) {
     const directory = pluginRootDirectory(moduleRoot);
 
     return Promise.resolve(existsFile(directory, READ_WRITE_PERMISSION))
-      .then(value => {
+      .then((value) => {
           if (!value) {
               console.warn(`Plugin Directory ${directory} either does not exist or not accessible`);
               return fsPromise.mkdirAsync(directory);
@@ -89,7 +89,7 @@ function babelTransform(srcFile, destFile) {
 
         // if file exist, then delete it
         Promise.resolve(existsFile(localSrcFile, READ_WRITE_PERMISSION))
-          .then(value => {
+          .then((value) => {
               if (!value) {
                   return true;
               }
@@ -107,7 +107,7 @@ function babelTransform(srcFile, destFile) {
 
                   // if file exist, then delete it
                   Promise.resolve(existsFile(destFile, READ_WRITE_PERMISSION))
-                    .then(value => {
+                    .then((value) => {
                         if (!value) {
                             return true;
                         }
@@ -131,7 +131,7 @@ function babelTransform(srcFile, destFile) {
 
 function getPluginType(path) {
     return Promise.resolve(fsPromise.statAsync(path))
-      .then(stats => {
+      .then((stats) => {
           if (stats.isFile()) {
               return FILE_PLUGIN_TYPE;
           } else if (stats.isDirectory()) {
@@ -149,13 +149,13 @@ export default (moduleRoot, path, throwError) => {
     let pluginPath = null;
 
     return Promise.resolve(requireResolve(path))
-      .then(directory => {
+      .then((directory) => {
           pluginPath = directory;
           return fsPromise.accessAsync(pluginPath, READ_PERMISSION);
       })
       .then(() => createPluginRootDirectory(moduleRoot))
       .then(() => getPluginType(path)) // check path of original
-      .then(pluginType => {
+      .then((pluginType) => {
           const pluginKey = md5(pluginPath);
           const link = pluginLink(moduleRoot, pluginKey);
 
@@ -163,15 +163,17 @@ export default (moduleRoot, path, throwError) => {
               console.log(`Babel compiling plugin ${pluginPath} to ${link}`);
 
               return Promise.resolve(babelTransform(pluginPath, link))
+              // eslint-disable-next-line import/no-dynamic-require
                 .then(() => require(link))
-                .then((config) => config.default);
+                .then(config => config.default);
           } else if (pluginType === MODULE_PLUGIN_TYPE || pluginType === DIRECTORY_PLUGIN_TYPE) {
+              // eslint-disable-next-line import/no-dynamic-require
               return require(pluginPath);
           }
 
           throw new Error('Plugin Path must be Global NPM Module, NPM Module Directory, or JS Config File');
       })
-      .then(config => {
+      .then((config) => {
           console.log('Resolved plugin at: ', pluginPath);
 
           return config;
